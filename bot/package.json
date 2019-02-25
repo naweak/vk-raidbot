@@ -1,0 +1,16 @@
+{
+  "name": "raidbot-backend",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "version": "1.0.0",
+  "description": "RaidBot backend",
+  "author": "naweak",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "express": "^4.16.4",
+    "querystring": "^0.2.0",
+    "shell-exec": "^1.0.2"
+  }
+}
