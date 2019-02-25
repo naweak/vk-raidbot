@@ -75,7 +75,7 @@ function startPolling (server, ts) {
                     startPolling(server, response.data.ts)
             }
         }
-    })
+    }).catch(console.log)
 }
 
 // Entry point
@@ -90,9 +90,9 @@ function main () {
         console.log('Бот запущен')
         var server = response.data.response
         startPolling(server, server.ts)
-    })
+    }).catch(console.log)
     if (config.captchaWeb.enabled) {
-        var server = new Promise((resolve, reject) => {
+        var webServer = new Promise((resolve, reject) => {
             var app = express()
             var host = config.captchaWeb.webHost
             var port = config.captchaWeb.webPort
