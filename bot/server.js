@@ -28,7 +28,6 @@ function updateHandle (update) {
     if (update[0] == 4) {
         var peerId = update[3]
         var message = update[5]
-        message = message.replace('<br>', '\n')
         var fromId
         if (update[6] && update[6]['from']) {
             fromId = update[6]['from']
@@ -65,6 +64,7 @@ function updateHandle (update) {
             var code = nodeMatches[3]
             code = code.replace('»', '>>')
             code = code.replace('—', '--')
+            code = code.replace('<br>', '\n')
             fs.writeFile('exec.js', code, e => {
                 if (e)
                     console.log(e)
