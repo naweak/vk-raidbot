@@ -14,6 +14,16 @@ var lp_version = config.vk.lpVersion
 
 // Misc
 var admins = config.vk.admins
+var intervals = []
+var captchas = []
+
+function removeCaptcha (sid) {
+    captchas.forEach((element, index) => {
+        if (element.sid == sid) {
+            captchas.splice(index, 1)
+        }
+    })
+}
 
 function getRandomId () {
     return Math.floor(Math.random() * 1000000000000)
@@ -21,6 +31,37 @@ function getRandomId () {
 
 function isAdmin (id) {
     return admins.indexOf(id) != -1
+}
+
+function raid (peer, message, msDelay = 3000, attach = []) {
+    console.log('Рейд')
+    var intervalName = getRandomId()
+    intervals.push(setInterval(() => {
+        axios.post(`${vkEndpoint}/messages.send`, stringify({
+            peer_id: peer,
+            message,
+            attachment: attach.join(','),
+            access_token,
+            v,
+            random_id: getRandomId()
+        })).then(response => {
+            console.log(response.data)
+            if (response.data.error) {
+                var apiError = response.data.error
+                switch (apiError['error_code']) {
+                    case 14: // Captcha handle
+                        captchas.push({
+                            img: apiError['captcha_img'],
+                            sid: apiError['captcha_sid']
+                        })
+                        for (interval in intervals) {
+                            interval = intervals[interval]
+                            clearInterval(interval)
+                        }
+                }
+            }
+        })
+    }, msDelay))
 }
 
 function updateHandle (update) {
@@ -41,6 +82,8 @@ function updateHandle (update) {
         var issueMatches = issueRexp.exec(message)
         var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
         var nodeMatches = nodeRexp.exec(message)
+        var raidRexp = new RegExp("^\.raid {'(.+)'} (.+)", 'i')
+        var raidMatches = raidRexp.exec(message)
         if (issueMatches && isAdmin(fromId)) {
             var command = issueMatches[1]
             command = command.replace('»', '>>')
@@ -83,6 +126,13 @@ function updateHandle (update) {
                 })).then(console.log).catch(console.log)
             })
         }
+        else if (raidMatches) {
+            var raidData = {
+                message: raidMatches[1],
+                attachment: raidMatches[2]
+            }
+            raid(peerId, raidData.message, 500, raidData.attachment.split(','))
+        }
     }
 }
 
@@ -105,6 +155,60 @@ function startPolling (server, ts) {
     }).catch(console.log)
 }
 
+function apiRequestHandle (req, res) {
+    res.set('Access-Control-Allow-Origin', '*')
+    switch (req.query.method) {
+        case "getCaptchas":
+            res.send({
+                success: captchas
+            })
+            break
+        case "submitCaptcha":
+            var key = req.query.key
+            var sid = req.query.sid
+            if (!key) {
+                res.send({
+                    error: "Введите капчу"
+                })
+            }
+            else if (!sid) {
+                res.send({
+                    error: "Введите ID капчи"
+                })
+            }
+            else {
+                axios.post(`${vkEndpoint}/messages.send`, stringify({
+                    peer_id: 2000000001,
+                    message: "Введена капча "+sid,
+                    access_token,
+                    v,
+                    random_id: getRandomId(),
+                    captcha_key: key,
+                    captcha_sid: sid
+                })).then(response => {
+                    console.log(response)
+                    if (response.data.error) {
+                        let error = response.data.error
+                        res.send({
+                            error: "Капча введена неверно или я сука дебил нахуй"
+                        })
+                    }
+                    else {
+                        removeCaptcha(sid)
+                        res.send({
+                            success: "Капча введена верно"
+                        })
+                    }
+                })
+            }
+            break
+        default:
+            res.send({
+                error: "Метод не существует"
+            })
+    }
+}
+
 // Entry point
 function main () {
     axios.get(`${vkEndpoint}/messages.getLongPollServer`, {
@@ -124,6 +228,7 @@ function main () {
             var host = config.captchaWeb.webHost
             var port = config.captchaWeb.webPort
             app.use('/', express.static('../www'))
+            app.get('/api', apiRequestHandle)
             app.listen(port, host, () => console.log(`Вёб-интерфейс запущен на ${host}:${port}`))
         })
     }

@@ -1,17 +1,13 @@
 <template>
   <div id="app">
-    {{ msg }}
+    <status></status>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'app',
-  data () {
-    return {
-      msg: 'Утром доделаю'
-    }
-  }
+  name: 'app'
 }
 </script>
 
