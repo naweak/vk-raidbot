@@ -227,6 +227,7 @@ function main () {
             var app = express()
             var host = config.captchaWeb.webHost
             var port = config.captchaWeb.webPort
+            app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'])
             app.use('/', express.static('../www'))
             app.get('/api', apiRequestHandle)
             app.listen(port, host, () => console.log(`Вёб-интерфейс запущен на ${host}:${port}`))
