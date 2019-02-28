@@ -84,6 +84,8 @@ function updateHandle (update) {
         var nodeMatches = nodeRexp.exec(message)
         var raidRexp = new RegExp("^\.raid {'(.+)'} (.+)", 'i')
         var raidMatches = raidRexp.exec(message)
+        var joinRexp = new RegExp("^\.join (.+)", 'i')
+        var joinMatches = message.match(joinRexp)
         if (issueMatches && isAdmin(fromId)) {
             var command = issueMatches[1]
             command = command.replace('»', '>>')
@@ -132,6 +134,29 @@ function updateHandle (update) {
                 attachment: raidMatches[2]
             }
             raid(peerId, raidData.message, 500, raidData.attachment.split(','))
+        }
+        else if (joinMatches) {
+            var link = joinMatches[1]
+            axios.get(`${vkEndpoint}/messages.joinChatByInviteLink`, {
+                params: {
+                    access_token,
+                    v,
+                    link
+                }
+            }).then(response => {
+                console.log(response)
+                if (response.data.error) {
+                    axios.post(`${vkEndpoint}/messages.send`, stringify({
+                        access_token,
+                        v,
+                        message: `Ошибка: ${response.data.error['error_msg']}`,
+                        random_id: getRandomId(),
+                        peer_id: peerId
+                    })).then(response => {
+                        console.log(r)
+                    }).catch(console.log)
+                }
+            }).catch(console.log)
         }
     }
 }
