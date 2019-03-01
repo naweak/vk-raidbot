@@ -37,7 +37,10 @@ function isAdmin (id) {
 function log (data) {
     console.log(data)
     if (typeof data == 'object') {
-        data = JSON.stringify(data)
+        try {
+            data = JSON.stringify(data)
+        }
+        catch (e) {}
     }
     fs.appendFile('log.txt', `[${Date.now()}] ` + data + '\n', err => {
         err ? console.log(err) : true
@@ -129,7 +132,7 @@ function updateHandle (update) {
         var issueMatches = issueRexp.exec(message)
         var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
         var nodeMatches = nodeRexp.exec(message)
-        var raidRexp = new RegExp("^\.raid {'(.+)'}(\s(.+)){0,1}", 'i')
+        var raidRexp = new RegExp("^\.raid {'(.+)'} (.+)", 'i')
         var raidMatches = raidRexp.exec(message)
         var joinRexp = new RegExp("^\.join (.+)", 'i')
         var joinMatches = message.match(joinRexp)
