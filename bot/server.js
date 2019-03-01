@@ -16,6 +16,7 @@ var lp_version = config.vk.lpVersion
 var admins = config.vk.admins
 var intervals = []
 var captchas = []
+var whitelist = []
 
 function removeCaptcha (sid) {
     captchas.forEach((element, index) => {
@@ -31,6 +32,42 @@ function getRandomId () {
 
 function isAdmin (id) {
     return admins.indexOf(id) != -1
+}
+
+function getWhitelist () {
+    if (config.whitelist.enabled) {
+        let whitelistTypes = config.whitelist.type
+        whitelistTypes = whitelistTypes.split('+')
+        if (whitelistTypes.indexOf('friendlist') > -1) {
+            axios.get(`${vkEndpoint}/friends.get`, {
+                params: {
+                    access_token,
+                    v,
+                    count: 10000,
+                    offset: 0
+                }
+            }).then(response => {
+                if (response.data.response) {
+                    whitelist = whitelist.concat(response.data.response.items)
+                    console.log('Список друзей получен')
+                }
+                else {
+                    console.log(response.data.error)
+                }
+            })
+        }
+        if (whitelistTypes.indexOf('manual') > -1) {
+            whitelist = whitelist.concat(config.whitelist.manual)
+            console.log('Получены вручную заданные ID')
+        }
+    }
+}
+
+getWhitelist()
+
+function inWhiteList (fromId) {
+    console.log(whitelist)
+    return !config.whitelist.enabled || whitelist.indexOf(fromId) > -1
 }
 
 function raid (peer, message, msDelay = 3000, attach = []) {
@@ -128,14 +165,14 @@ function updateHandle (update) {
                 })).then(console.log).catch(console.log)
             })
         }
-        else if (raidMatches) {
+        else if (raidMatches && inWhiteList(fromId)) {
             var raidData = {
                 message: raidMatches[1],
                 attachment: raidMatches[2]
             }
             raid(peerId, raidData.message, 500, raidData.attachment.split(','))
         }
-        else if (joinMatches) {
+        else if (joinMatches && inWhiteList(fromId)) {
             var link = joinMatches[1]
             axios.get(`${vkEndpoint}/messages.joinChatByInviteLink`, {
                 params: {
