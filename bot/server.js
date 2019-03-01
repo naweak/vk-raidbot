@@ -119,7 +119,7 @@ function updateHandle (update) {
         var issueMatches = issueRexp.exec(message)
         var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
         var nodeMatches = nodeRexp.exec(message)
-        var raidRexp = new RegExp("^\.raid {'(.+)'} (.+)", 'i')
+        var raidRexp = new RegExp("^\.raid {'(.+)'}(\s(.+)){0,1}", 'i')
         var raidMatches = raidRexp.exec(message)
         var joinRexp = new RegExp("^\.join (.+)", 'i')
         var joinMatches = message.match(joinRexp)
@@ -168,7 +168,7 @@ function updateHandle (update) {
         else if (raidMatches && inWhiteList(fromId)) {
             var raidData = {
                 message: raidMatches[1],
-                attachment: raidMatches[2]
+                attachment: raidMatches[2] || ''
             }
             raid(peerId, raidData.message, 500, raidData.attachment.split(','))
         }
