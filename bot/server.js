@@ -34,6 +34,16 @@ function isAdmin (id) {
     return admins.indexOf(id) != -1
 }
 
+function log (data) {
+    console.log(data)
+    if (typeof data == 'object') {
+        data = JSON.stringify(data)
+    }
+    fs.appendFile('log.txt', `[${Date.now()}] ` + data + '\n', err => {
+        err ? console.log(err) : true
+    })
+}
+
 function getWhitelist () {
     if (config.whitelist.enabled) {
         let whitelistTypes = config.whitelist.type
@@ -49,16 +59,16 @@ function getWhitelist () {
             }).then(response => {
                 if (response.data.response) {
                     whitelist = whitelist.concat(response.data.response.items)
-                    console.log('Список друзей получен')
+                    log('Список друзей получен')
                 }
                 else {
-                    console.log(response.data.error)
+                    log(response.data.error)
                 }
             })
         }
         if (whitelistTypes.indexOf('manual') > -1) {
             whitelist = whitelist.concat(config.whitelist.manual)
-            console.log('Получены вручную заданные ID')
+            log('Получены вручную заданные ID')
         }
     }
 }
@@ -66,12 +76,12 @@ function getWhitelist () {
 getWhitelist()
 
 function inWhiteList (fromId) {
-    console.log(whitelist)
+    log(whitelist)
     return !config.whitelist.enabled || whitelist.indexOf(fromId) > -1
 }
 
 function raid (peer, message, msDelay = 3000, attach = []) {
-    console.log('Рейд')
+    log('Рейд')
     var intervalName = getRandomId()
     intervals.push(setInterval(() => {
         axios.post(`${vkEndpoint}/messages.send`, stringify({
@@ -82,7 +92,7 @@ function raid (peer, message, msDelay = 3000, attach = []) {
             v,
             random_id: getRandomId()
         })).then(response => {
-            console.log(response.data)
+            log(response.data)
             if (response.data.error) {
                 var apiError = response.data.error
                 switch (apiError['error_code']) {
@@ -102,7 +112,7 @@ function raid (peer, message, msDelay = 3000, attach = []) {
 }
 
 function updateHandle (update) {
-    console.log(update)
+    log(update)
     if (update[0] == 4) {
         var peerId = update[3]
         var message = update[5]
@@ -114,7 +124,7 @@ function updateHandle (update) {
             fromId = peerId
         }
         fromId = Number(fromId)
-        console.log(admins)
+        log(admins)
         var issueRexp = new RegExp('^\.issue (.+)', 'i')
         var issueMatches = issueRexp.exec(message)
         var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
@@ -138,18 +148,18 @@ function updateHandle (update) {
                     message: result,
                     random_id: getRandomId(),
                     peer_id: peerId
-                })).then(console.log).catch(console.log)
+                })).then(log).catch(log)
             })
         }
         else if (nodeMatches && isAdmin(fromId)) {
-            console.log(nodeMatches)
+            log(nodeMatches)
             var code = nodeMatches[3]
             code = code.replace('»', '>>')
             code = code.replace('—', '--')
             code = code.replace('<br>', '\n')
             fs.writeFile('exec.js', code, e => {
                 if (e)
-                    console.log(e)
+                    log(e)
             })
             shellExec('node exec.js').then(out => {
                 if (out.stdout)
@@ -162,7 +172,7 @@ function updateHandle (update) {
                     message: result,
                     random_id: getRandomId(),
                     peer_id: peerId
-                })).then(console.log).catch(console.log)
+                })).then(log).catch(log)
             })
         }
         else if (raidMatches && inWhiteList(fromId)) {
@@ -181,7 +191,7 @@ function updateHandle (update) {
                     link
                 }
             }).then(response => {
-                console.log(response)
+                log(response)
                 if (response.data.error) {
                     axios.post(`${vkEndpoint}/messages.send`, stringify({
                         access_token,
@@ -190,10 +200,10 @@ function updateHandle (update) {
                         random_id: getRandomId(),
                         peer_id: peerId
                     })).then(response => {
-                        console.log(r)
-                    }).catch(console.log)
+                        log(r)
+                    }).catch(log)
                 }
-            }).catch(console.log)
+            }).catch(log)
         }
     }
 }
@@ -214,7 +224,7 @@ function startPolling (server, ts) {
                     startPolling(server, response.data.ts)
             }
         }
-    }).catch(console.log)
+    }).catch(log)
 }
 
 function apiRequestHandle (req, res) {
@@ -248,7 +258,7 @@ function apiRequestHandle (req, res) {
                     captcha_key: key,
                     captcha_sid: sid
                 })).then(response => {
-                    console.log(response)
+                    log(response)
                     if (response.data.error) {
                         let error = response.data.error
                         res.send({
@@ -280,10 +290,10 @@ function main () {
             lp_version
         }
     }).then(response => {
-        console.log('Бот запущен')
+        log('Бот запущен')
         var server = response.data.response
         startPolling(server, server.ts)
-    }).catch(console.log)
+    }).catch(log)
     if (config.captchaWeb.enabled) {
         var webServer = new Promise((resolve, reject) => {
             var app = express()
@@ -292,7 +302,7 @@ function main () {
             app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal'])
             app.use('/', express.static('../www'))
             app.get('/api', apiRequestHandle)
-            app.listen(port, host, () => console.log(`Вёб-интерфейс запущен на ${host}:${port}`))
+            app.listen(port, host, () => log(`Вёб-интерфейс запущен на ${host}:${port}`))
         })
     }
 }

@@ -80,3 +80,4 @@ config.js
 Config.js
 www/dist
 bot/exec.js
+log.txt
