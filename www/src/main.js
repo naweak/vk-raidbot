@@ -20,3 +20,17 @@ const app = new Vue({
   },
   render: h => h(App)
 })
+
+function onresize () {
+  var width = window.innerWidth
+  var body = document.getElementsByTagName('body')[0]
+  if (width <= 1080) {
+    body.style.fontSize = "160%"
+  }
+  else {
+    body.style.fontSize = "100%"
+  }
+}
+
+window.onresize = onresize
+window.onresize()
