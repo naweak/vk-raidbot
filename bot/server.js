@@ -225,6 +225,28 @@ function startPolling (server, ts) {
             switch (fail) {
                 case 1:
                     startPolling(server, response.data.ts)
+                case 2:
+                    axios.get(`${vkEndpoint}/messages.getLongPollServer`, {
+                        params: {
+                            access_token,
+                            v,
+                            lpVersion
+                        }
+                    }).then(response => {
+                        var newServer = response.data.response
+                        startPolling(newServer, newServer.ts)
+                    })
+                case 3:
+                    axios.get(`${vkEndpoint}/messages.getLongPollServer`, {
+                        params: {
+                            access_token,
+                            v,
+                            lpVersion
+                        }
+                    }).then(response => {
+                        var newServer = response.data.response
+                        startPolling(newServer, newServer.ts)
+                    })
             }
         }
     }).catch(log)
