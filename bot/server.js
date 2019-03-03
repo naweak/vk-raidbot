@@ -230,7 +230,7 @@ function startPolling (server, ts) {
                         params: {
                             access_token,
                             v,
-                            lpVersion
+                            lp_version
                         }
                     }).then(response => {
                         var newServer = response.data.response
@@ -241,7 +241,7 @@ function startPolling (server, ts) {
                         params: {
                             access_token,
                             v,
-                            lpVersion
+                            lp_version
                         }
                     }).then(response => {
                         var newServer = response.data.response
