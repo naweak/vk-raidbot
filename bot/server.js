@@ -157,7 +157,7 @@ function updateHandle (update) {
         var raidMatches = raidRexp.exec(message)
         var joinRexp = new RegExp("^\.join (.+)", 'i')
         var joinMatches = message.match(joinRexp)
-        if (issueMatches && isAdmin(fromId)) {
+        if (issueMatches && isAdmin(fromId) && inWhiteList(fromId)) {
             var command = issueMatches[1]
             command = command.replace('»', '>>')
             command = command.replace('—', '--')
@@ -175,7 +175,7 @@ function updateHandle (update) {
                 })).then(log).catch(log)
             })
         }
-        else if (nodeMatches && isAdmin(fromId)) {
+        else if (nodeMatches && isAdmin(fromId) && inWhiteList(fromId)) {
             log(nodeMatches)
             var code = nodeMatches[3]
             code = code.replace('»', '>>')
