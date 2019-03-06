@@ -11,6 +11,7 @@
     "axios": "^0.18.0",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
+    "js-event-bus": "0.0.5",
     "querystring": "^0.2.0",
     "shell-exec": "^1.0.2"
   }

@@ -31,7 +31,7 @@
           },
           success (data) {
             if (data.success) {
-              vm.$emit('success', data.success)
+              vm.$emit('info', data.success)
             }
             else {
               vm.$emit('error', data.error)

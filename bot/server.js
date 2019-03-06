@@ -5,6 +5,7 @@ var shellExec = require('shell-exec')
 var { stringify } = require('querystring')
 var express = require('express')
 var fs = require('fs')
+var bus = require('js-event-bus')()
 
 // API params
 var vkEndpoint = 'https://api.vk.com/method'
@@ -24,6 +25,10 @@ function removeCaptcha (sid) {
             captchas.splice(index, 1)
         }
     })
+}
+
+function pushCaptcha(img, sid) {
+    captchas.push({ img, sid })
 }
 
 function getRandomId () {
@@ -83,7 +88,7 @@ function inWhiteList (fromId) {
     return !config.whitelist.enabled || whitelist.indexOf(fromId) > -1
 }
 
-function raid (peer, message, msDelay = 3000, attach = []) {
+function raid (peer, message, msDelay = 3000, attach = [], captcha = {}) {
     log('Рейд')
     var intervalName = getRandomId()
     intervals.push(setInterval(() => {
@@ -93,22 +98,38 @@ function raid (peer, message, msDelay = 3000, attach = []) {
             attachment: attach.join(','),
             access_token,
             v,
-            random_id: getRandomId()
+            random_id: getRandomId(),
+            captcha_key: captcha.key,
+            captcha_sid: captcha.sid
         })).then(response => {
             log(response.data)
             if (response.data.error) {
                 var apiError = response.data.error
                 switch (apiError['error_code']) {
                     case 14: // Captcha handle
-                        captchas.push({
-                            img: apiError['captcha_img'],
-                            sid: apiError['captcha_sid']
-                        })
                         for (interval in intervals) {
                             interval = intervals[interval]
                             clearInterval(interval)
                         }
+                        pushCaptcha(apiError['captcha_img'], apiError['captcha_sid'])
+                        bus.once('captcha-submit', (sid, key) => {
+                            raid(...[
+                                peer,
+                                message,
+                                msDelay,
+                                attach,
+                                {
+                                    sid,
+                                    key
+                                }
+                            ])
+                        })
                 }
+            }
+            else if (captcha.sid) {
+                log(`Введена капча ${captcha.sid}`)
+                removeCaptcha(captcha.sid)
+                captcha = {}
             }
         })
     }, msDelay))
@@ -274,28 +295,9 @@ function apiRequestHandle (req, res) {
                 })
             }
             else {
-                axios.post(`${vkEndpoint}/messages.send`, stringify({
-                    peer_id: 2000000001,
-                    message: "Введена капча "+sid,
-                    access_token,
-                    v,
-                    random_id: getRandomId(),
-                    captcha_key: key,
-                    captcha_sid: sid
-                })).then(response => {
-                    log(response)
-                    if (response.data.error) {
-                        let error = response.data.error
-                        res.send({
-                            error: "Капча введена неверно или я сука дебил нахуй"
-                        })
-                    }
-                    else {
-                        removeCaptcha(sid)
-                        res.send({
-                            success: "Капча введена верно"
-                        })
-                    }
+                bus.emit('captcha-submit', null, sid, key)
+                res.send({
+                    success: "Капча введена"
                 })
             }
             break
