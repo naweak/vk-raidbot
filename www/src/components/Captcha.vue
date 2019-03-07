@@ -1,9 +1,9 @@
 <template>
   <div class="captcha" v-if="captcha">
     <form v-on:submit.prevent="submitCaptcha()">
-      <div class="img"><img :src="captcha.img" :alt="captcha.sid"></div>
-      <div>Вводите: <input id="key" v-model="key"></div>
-      <div><button type="submit">YARRR!</button></div>
+      <div class="img formColumn"><img :src="captcha.img" :alt="captcha.sid"></div>
+      <div class="formColumn">Вводите: <input type="text" id="key" v-model="key"></div>
+      <div class="formColumn"><button type="submit">YARRR!</button></div>
     </form>
   </div>
 </template>
@@ -43,3 +43,14 @@
     }
   }
 </script>
+
+<style scoped>
+  .captcha {
+    border-radius: 3px;
+    border: 1px solid #dcdcdc;
+    box-shadow: 0 0 10px 0 #dcdcdc;
+    display: inline-block;
+    margin: 10px;
+    padding: 10px;
+  }
+</style>
