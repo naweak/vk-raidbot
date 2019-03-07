@@ -16,6 +16,7 @@ var lp_version = config.vk.lpVersion
 // Misc
 var admins = config.vk.admins
 var intervals = []
+var packIntervals = []
 var captchas = []
 var whitelist = []
 
@@ -33,6 +34,10 @@ function pushCaptcha(img, sid) {
 
 function getRandomId () {
     return Math.floor(Math.random() * 1000000000000)
+}
+
+function arrayChoice (items) {
+    return items[Math.floor(Math.random()*items.length)];
 }
 
 function isAdmin (id) {
@@ -135,6 +140,59 @@ function raid (peer, message, msDelay = 3000, attach = [], captcha = {}) {
     }, msDelay))
 }
 
+function packRaid (peer, pack, delay = 4770, captcha = {}) {
+    let currentItem
+    log('Рейд')
+    if (pack.length == 0 || pack === undefined) {
+        log('Pack is empty')
+    }
+    else {
+        packIntervals.push(setInterval(() => {
+            currentItem = arrayChoice(pack)
+            axios.post(`${vkEndpoint}/messages.send`, stringify({
+                access_token,
+                v,
+                peer_id: peer,
+                attachment: `photo${currentItem['owner_id']}_${currentItem['id']}`,
+                random_id: getRandomId(),
+                captcha_sid: captcha.sid,
+                captcha_key: captcha.key
+            })).then(response => {
+                let data = response.data
+                log(data)
+                if (data.error) {
+                    let error = data.error
+                    let fail = error['error_code']
+                    switch (fail) {
+                        case 14: // Captcha handle
+                            for (interval in packIntervals) {
+                                interval = packIntervals[interval]
+                                clearInterval(interval)
+                            }
+                            pushCaptcha(error['captcha_img'], error['captcha_sid'])
+                            bus.once('captcha-submit', (sid, key) => {
+                                packRaid(...[
+                                    peer,
+                                    pack,
+                                    delay,
+                                    {
+                                        sid,
+                                        key
+                                    }
+                                ])
+                            })
+                    }
+                }
+                else if (captcha.sid) {
+                    log(`Введена капча ${captcha.sid}`)
+                    removeCaptcha(captcha.sid)
+                    captcha = {}
+                }
+            })
+        }, delay))
+    }
+}
+
 function updateHandle (update) {
     log(update)
     if (update[0] == 4) {
@@ -157,6 +215,8 @@ function updateHandle (update) {
         var raidMatches = raidRexp.exec(message)
         var joinRexp = new RegExp("^\.join (.+)", 'i')
         var joinMatches = message.match(joinRexp)
+        var packRexp = new RegExp("^\.pack (.+)", 'i')
+        var packMatches = message.match(packRexp)
         if (issueMatches && isAdmin(fromId) && inWhiteList(fromId)) {
             var command = issueMatches[1]
             command = command.replace('»', '>>')
@@ -227,6 +287,73 @@ function updateHandle (update) {
                         log(r)
                     }).catch(log)
                 }
+            }).catch(log)
+        }
+        else if (packMatches && inWhiteList(fromId) && config.packs.enabled) {
+            console.log(packMatches)
+            var packName = packMatches[1]
+            var pack = config.packs.list[packName]
+            var packItems = []
+            if (!pack) {
+                axios.get(`${vkEndpoint}/messages.send`, {
+                    params: {
+                        access_token,
+                        v,
+                        random_id: getRandomId(),
+                        message: "Пак не найден",
+                        peer_id: peerId
+                    }
+                }).then(response => log(response.data.response || response.data.error)).catch(log)
+            }
+            else if (pack.ownerId && pack.albumId) {
+                axios.get(`${vkEndpoint}/photos.get`, {
+                    params: {
+                        access_token,
+                        v,
+                        owner_id: pack.ownerId,
+                        album_id: pack.albumId,
+                        count: 1000
+                    }
+                }).then(response => {
+                    let data = response.data
+                    if (data.error) {
+                        axios.get(`${vkEndpoint}/messages.send`, {
+                            params: {
+                                access_token,
+                                v,
+                                random_id: getRandomId(),
+                                message: "Ошибка получения пака: " + data.error['error_code'],
+                                peer_id: peerId
+                            }
+                        })
+                    }
+                    else {
+                        let success = data.response
+                        packRaid(peerId, success['items'])
+                    }
+                })
+            }
+        }
+        else if (message.match(/^\.packs/i) && config.packs.enabled && inWhiteList(fromId)) {
+            console.log('pack request')
+            let packs = config.packs.list
+            let messageSent = "Паки:\n"
+            let currentPack
+            let currentPackName
+            for (pack in packs) {
+                currentPackName = pack
+                currentPack = packs[pack]
+                messageSent += `* ${currentPackName} — https://vk.com/album${currentPack.ownerId}_${currentPack.albumId}\n`
+            }
+            axios.post(`${vkEndpoint}/messages.send`, stringify({
+                access_token,
+                v,
+                message: messageSent,
+                random_id: getRandomId(),
+                peer_id: peerId
+            })).then(response => {
+                let data = response.data
+                log(data)
             }).catch(log)
         }
     }

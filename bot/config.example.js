@@ -14,6 +14,15 @@ const config = {
         enabled: false,
         type: "friendlist+manual", // Доступные типы: friendlist, manual; можно применять несколько, разделяя '+'. Например: friendlist+manual
         manual: []
+    },
+    packs: {
+        enabled: true,
+        list: { // Задается автор альбома в ownerId и ID альбома в albumId
+            "bream": {
+                ownerId: -171520150,
+                albumId: 261312311
+            }
+        }
     }
 }
 
