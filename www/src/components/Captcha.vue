@@ -1,7 +1,7 @@
 <template>
   <div class="captcha" v-if="captcha">
     <form v-on:submit.prevent="submitCaptcha()">
-      <div class="img formColumn"><img :src="captcha.img" :alt="captcha.sid"></div>
+      <div class="img formColumn"><img v-on:click="updateImg()" :src="captcha.img + random" :alt="captcha.sid"></div>
       <div class="formColumn">Вводите: <input type="text" id="key" v-model="key"></div>
       <div class="formColumn"><button type="submit">YARRR!</button></div>
     </form>
@@ -16,6 +16,7 @@
     data () {
       return {
         key: String(),
+        random: `&${Math.random()}`
       }
     },
     methods: {
@@ -39,6 +40,9 @@
             vm.$emit('get_captchas')
           }
         })
+      },
+      updateImg () {
+        this.random = `&${Math.random()}`
       }
     }
   }
