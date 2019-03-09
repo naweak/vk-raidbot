@@ -29,7 +29,7 @@ function removeCaptcha (sid) {
 }
 
 function pushCaptcha(img, sid) {
-    captchas.push({ img, sid })
+    captchas.unshift({ img, sid })
 }
 
 function getRandomId () {
