@@ -40,6 +40,18 @@ function arrayChoice (items) {
     return items[Math.floor(Math.random()*items.length)];
 }
 
+function getReplyOnVoice () {
+    let replies = [
+        'хули ты там глотку дерешь, шлюха?',
+        'отправишь еще один голосовой высер — этим ртом будешь сосать',
+        'иди нахуй со своими войсами, уебище',
+        'пердеж бомжа слушать приятнее чем твой войс',
+        'не понял, что ты там мямлишь?',
+        'пососеш)ок?'
+    ]
+    return arrayChoice(replies)
+}
+
 function isAdmin (id) {
     return admins.indexOf(id) != -1
 }
@@ -354,6 +366,17 @@ function updateHandle (update) {
             })).then(response => {
                 let data = response.data
                 log(data)
+            }).catch(log)
+        }
+        else if (update[6] && update[6]['attach1_kind'] == 'audiomsg') {
+            axios.post(`${vkEndpoint}/messages.send`, stringify({
+                access_token,
+                v,
+                random_id: getRandomId(),
+                message: `@id${fromId}, ${getReplyOnVoice()}`,
+                peer_id: peerId
+            })).then(response => {
+                log(response.data)
             }).catch(log)
         }
     }
