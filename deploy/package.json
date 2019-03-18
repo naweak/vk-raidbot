@@ -1,0 +1,13 @@
+{
+  "name": "raidbot-deploy",
+  "version": "1.0.0",
+  "description": "Deploy raidbot",
+  "scripts": {
+    "config": "node createconfig.js"
+  },
+  "author": "naweak",
+  "license": "MIT",
+  "dependencies": {
+    "prompt-sync": "^4.1.6"
+  }
+}

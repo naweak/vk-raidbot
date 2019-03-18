@@ -76,8 +76,9 @@ typings/
 .fusebox/
 
 *.bak
-config.js
 Config.js
 www/dist
 bot/exec.js
 log.txt
+.idea
+config.json

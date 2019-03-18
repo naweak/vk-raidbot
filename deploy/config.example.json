@@ -1,0 +1,27 @@
+{
+    "captchaWeb": {
+        "enabled": false,
+        "webHost": "127.0.0.1",
+        "webPort": 1488
+    },
+    "vk": {
+        "token": "",
+        "apiVersion": 5.92,
+        "lpVersion": 3,
+        "admins": []
+    },
+    "whitelist": {
+        "enabled": false,
+        "type": "friendlist+manual",
+        "manual": []
+    },
+    "packs": {
+        "enabled": true,
+        "list": {
+            "bream": {
+                "ownerId": -171520150,
+                "albumId": 261312311
+            }
+        }
+    }
+}
