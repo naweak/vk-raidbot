@@ -27,8 +27,12 @@ if (isYes(reconfigure)) {
 		serverConfig.vk.apiVersion = apiVersion
 		const lpVersion = prompt('Версия LongpollAPI (3): ', 3)
 		serverConfig.vk.lpVersion = lpVersion
-		const admins = prompt('Админы бота (через запятую, без пробелов): ')
-		serverConfig.vk.admins = admins.split(',')
+		var admins = prompt('Админы бота (через запятую, без пробелов): ')
+		admins = admins.split(',')
+		admins.forEach((item, index) => {
+			admins[index] = Number(item)
+		})
+		serverConfig.vk.admins = admins
 		const enableWhitelist = prompt('Включить вайтлист? (Y/n) ')
 		serverConfig.whitelist.enabled = isYes(enableWhitelist)
 		if (isYes(enableWhitelist)) {
