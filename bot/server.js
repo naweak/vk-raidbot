@@ -110,6 +110,10 @@ function inWhiteList (fromId) {
     return !config.whitelist.enabled || whitelist.indexOf(fromId) > -1
 }
 
+function dontRaid (peer) {
+    return config.vk.dontRaid.indexOf(peer) > -1
+}
+
 function raid (peer, message, msDelay = 3000, attach = [], captcha = {}) {
     log('Рейд')
     var intervalName = getRandomId()
@@ -276,7 +280,7 @@ function updateHandle (update) {
                 })).then(log).catch(log)
             })
         }
-        else if (raidMatches && inWhiteList(fromId)) {
+        else if (raidMatches && inWhiteList(fromId) && !dontRaid(peerId)) {
             var raidData = {
                 message: raidMatches[1],
                 attachment: raidMatches[2] || ''
@@ -306,7 +310,7 @@ function updateHandle (update) {
                 }
             }).catch(log)
         }
-        else if (packMatches && inWhiteList(fromId) && config.packs.enabled) {
+        else if (packMatches && inWhiteList(fromId) && config.packs.enabled && !dontRaid(peerId)) {
             console.log(packMatches)
             var packName = packMatches[1]
             var pack = config.packs.list[packName]
@@ -373,7 +377,7 @@ function updateHandle (update) {
                 log(data)
             }).catch(log)
         }
-        else if (update[6] && update[6]['attach1_kind'] == 'audiomsg') {
+        else if (update[6] && update[6]['attach1_kind'] == 'audiomsg' && !dontRaid(peerId)) {
             axios.post(`${vkEndpoint}/messages.send`, stringify({
                 access_token,
                 v,
