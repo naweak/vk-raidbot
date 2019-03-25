@@ -378,8 +378,9 @@ function updateHandle (update) {
                 access_token,
                 v,
                 random_id: getRandomId(),
-                message: `@id${fromId}, ${getReplyOnVoice()}`,
-                peer_id: peerId
+                message: getReplyOnVoice(),
+                peer_id: peerId,
+                reply_to: update[1]
             })).then(response => {
                 log(response.data)
             }).catch(log)
