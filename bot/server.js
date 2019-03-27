@@ -232,8 +232,9 @@ function updateHandle (update) {
         var issueMatches = issueRexp.exec(message)
         var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
         var nodeMatches = nodeRexp.exec(message)
-        var raidRexp = new RegExp("^\.raid {'(.+)'} (.+)", 'i')
+        var raidRexp = new RegExp("^\.(raid|nabigaem) {'(.+)'} (.+)", 'i')
         var raidMatches = raidRexp.exec(message)
+	console.log(raidMatches)
         var joinRexp = new RegExp("^\.join (.+)", 'i')
         var joinMatches = message.match(joinRexp)
         var packRexp = new RegExp("^\.pack (.+)", 'i')
@@ -282,8 +283,8 @@ function updateHandle (update) {
         }
         else if (raidMatches && inWhiteList(fromId) && !dontRaid(peerId)) {
             var raidData = {
-                message: raidMatches[1],
-                attachment: raidMatches[2] || ''
+                message: raidMatches[2],
+                attachment: raidMatches[3] || ''
             }
             raid(peerId, raidData.message, 500, raidData.attachment.split(','))
         }
