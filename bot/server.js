@@ -6,6 +6,7 @@ var { stringify } = require('querystring')
 var express = require('express')
 var fs = require('fs')
 var bus = require('js-event-bus')()
+var unescape = require('lodash.unescape')
 
 // API params
 var vkEndpoint = 'https://api.vk.com/method'
@@ -38,6 +39,15 @@ function getRandomId () {
 
 function arrayChoice (items) {
     return items[Math.floor(Math.random()*items.length)];
+}
+
+function unhtml (text) {
+    text = unescape(text)
+    text = text.replace(/<br>/ig, '\n')
+    text = text.replace(/»/g, '>>')
+    text = text.replace(/«/g, '<<')
+    text = text.replace(/—/g, '--')
+    return text
 }
 
 function getReplyOnVoice () {
@@ -230,7 +240,7 @@ function updateHandle (update) {
         log(admins)
         var issueRexp = new RegExp('^\.issue (.+)', 'i')
         var issueMatches = issueRexp.exec(message)
-        var nodeRexp = new RegExp('^\.(node(js){0,1}|js) (.+)', 'i')
+        var nodeRexp = new RegExp('^\.exec (.+)', 'ims')
         var nodeMatches = nodeRexp.exec(message)
         var raidRexp = new RegExp("^\.(raid|nabigaem) {'(.+)'} (.+)", 'i')
         var raidMatches = raidRexp.exec(message)
@@ -241,33 +251,8 @@ function updateHandle (update) {
         var packMatches = message.match(packRexp)
         if (issueMatches && isAdmin(fromId) && inWhiteList(fromId)) {
             var command = issueMatches[1]
-            command = command.replace('»', '>>')
-            command = command.replace('—', '--')
+            command = unhtml(command)
             shellExec(command).then(out => {
-                if (out.stdout)
-                    result = out.stdout
-                else
-                    result = out.stderr
-                axios.post(`${vkEndpoint}/messages.send`, stringify({
-                    access_token,
-                    v,
-                    message: result,
-                    random_id: getRandomId(),
-                    peer_id: peerId
-                })).then(log).catch(log)
-            })
-        }
-        else if (nodeMatches && isAdmin(fromId) && inWhiteList(fromId)) {
-            log(nodeMatches)
-            var code = nodeMatches[3]
-            code = code.replace('»', '>>')
-            code = code.replace('—', '--')
-            code = code.replace('<br>', '\n')
-            fs.writeFile('exec.js', code, e => {
-                if (e)
-                    log(e)
-            })
-            shellExec('node exec.js').then(out => {
                 if (out.stdout)
                     result = out.stdout
                 else
@@ -389,6 +374,29 @@ function updateHandle (update) {
             })).then(response => {
                 log(response.data)
             }).catch(log)
+        }
+        else if (nodeMatches && isAdmin(fromId)) {
+            console.log('Node', nodeMatches)
+            let code = unhtml(nodeMatches[1])
+            console.log('Code', code)
+            let result
+            try {
+                result = eval(`(function(){${code}})()`)
+            }
+            catch (e) {
+                console.log(e)
+                result = e.toString()
+            }
+            console.log(access_token)
+            axios.post(`${vkEndpoint}/messages.send`, stringify({
+                access_token,
+                v,
+                message: "Результат: " + JSON.stringify(result) || 'void',
+                peer_id: peerId,
+                random_id: getRandomId()
+            })).then(response => {
+                console.log(response.data)
+            })
         }
     }
 }
